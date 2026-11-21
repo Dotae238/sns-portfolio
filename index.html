@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WANKE — Overseas SNS Operation & Growth Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Noto+Sans+SC:wght@400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#F3D8DF',
+            soft: '#F8ECEF',
+            sticker: '#ECE5DA',
+            magenta: '#D92D6E',
+            ink: '#202124',
+            muted: '#5F6368',
+          },
+          fontFamily: {
+            display: ['"Space Grotesk"', '"Noto Sans SC"', 'sans-serif'],
+            sans: ['"Noto Sans SC"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-cream: #F3D8DF;
+      --bg-soft: #F8ECEF;
+      --bg-sticker: #ECE5DA;
+      --accent-magenta: #D92D6E;
+      --text-ink: #202124;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-ink);
+      font-family: 'Noto Sans SC', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    /* 细腻纸张噪点叠层 */
+    .grain-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* 全屏 Scroll-Snap 容器 */
+    .snap-container {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    @media (max-width: 1024px) {
+      .snap-container {
+        scroll-snap-type: y proximity;
+      }
+    }
+
+    .snap-section {
+      min-height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4.5rem 1.5rem 2.5rem;
+    }
+
+    /* 缎面微质感贴纸与硬边阴影 */
+    .sticker-card {
+      background: linear-gradient(145deg, #FBF8F3 0%, #ECE5DA 100%);
+      border: 1.5px solid #202124;
+      box-shadow: 4px 4px 0px #202124;
+      transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+    }
+
+    .sticker-card:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px #D92D6E;
+    }
+
+    .soft-panel {
+      background-color: rgba(248, 236, 239, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(32, 33, 36, 0.16);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 异形切角徽章 */
+    .cutout-badge {
+      clip-path: polygon(6% 0%, 94% 0%, 100% 18%, 100% 82%, 94% 100%, 6% 100%, 0% 82%, 0% 18%);
+    }
+
+    /* 隐藏横向滚动条 */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* 导航圆点激活态 */
+    .nav-dot.active {
+      background-color: #D92D6E;
+      transform: scale(1.45);
+      border-color: #202124;
+    }
+
+    /* 图片加载失败降级容器 */
+    .asset-box {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #ECE5DA 0%, #E2D7C7 100%);
+    }
+    .asset-box.is-missing::after {
+      content: attr(data-fallback);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #5F6368;
+      border: 1.5px dashed rgba(32,33,36,0.3);
+      margin: 0.5rem;
+      border-radius: 0.5rem;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-magenta selection:text-white">
+  <div class="grain-overlay"></div>
+
+  <!-- 顶部固定栏 -->
+  <header class="fixed top-0 left-0 right-0 z-40 px-4 md:px-10 py-3 flex items-center justify-between pointer-events-none">
+    <a href="#sec-hero" class="pointer-events-auto inline-flex items-center gap-2 bg-sticker border-[1.5px] border-ink px-3 py-1 rounded-full shadow-[2px_2px_0_#202124]">
+      <span class="w-2.5 h-2.5 rounded-full bg-magenta"></span>
+      <span class="font-display font-bold text-sm tracking-tight">WANKE.PORTFOLIO</span>
+      <span class="hidden sm:inline text-xs font-mono text-muted">/ 2026</span>
+    </a>
+
+    <div class="pointer-events-auto flex items-center gap-2">
+      <button id="langToggle" onclick="toggleLang()" class="bg-soft hover:bg-sticker border-[1.5px] border-ink px-3 py-1 rounded-full text-xs font-mono font-bold shadow-[2px_2px_0_#202124] transition active:translate-y-0.5 cursor-pointer">
+        EN / <span class="text-magenta">CN</span>
+      </button>
+      <a href="#sec-contact" data-i18n="nav_hire" class="bg-magenta text-white border-[1.5px] border-ink px-3.5 py-1 rounded-full text-xs font-bold shadow-[2px_2px_0_#202124] hover:opacity-95 transition">
+        联系合作
+      </a>
+    </div>
+  </header>
+
+    <!-- 右侧固定圆点导航（共 8 个章节：0~7） -->
+  <nav aria-label="Section Navigation" class="fixed right-3 md:right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3">
+    <button onclick="goToSection(0)" class="nav-dot active w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="01 Cover"></button>
+    <button onclick="goToSection(1)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="02 Metrics"></button>
+    <button onclick="goToSection(2)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="03 Threads Growth"></button>
+    <button onclick="goToSection(3)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="04 Xiaohongshu"></button>
+    <button onclick="goToSection(4)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="05 AIGC IP Video"></button>
+    <button onclick="goToSection(5)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="06 Visual & E-com"></button>
+    <button onclick="goToSection(6)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="07 KOL Strategy"></button>
+    <button onclick="goToSection(7)" class="nav-dot w-2.5 h-2.5 rounded-full bg-soft border border-ink transition-all cursor-pointer" title="08 Contact"></button>
+  </nav>
+
+  <!-- 主滚动容器 -->
+  <main id="snapContainer" class="snap-container">
+
+    <!-- ==================== SECTION 1: HERO & TOC ==================== -->
+    <section id="sec-hero" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <!-- 左侧主视觉与定位 -->
+        <div class="lg:col-span-7 space-y-5 relative">
+          <!-- 装饰贴纸与回形针 -->
+          <div class="inline-flex items-center gap-2 bg-sticker border-[1.5px] border-ink px-3.5 py-1.5 rounded-md -rotate-1 shadow-[3px_3px_0_#202124]">
+            <svg class="w-4 h-4 text-magenta" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            <span class="font-mono text-xs font-bold tracking-wider uppercase" data-i18n="hero_badge">PORTFOLIO · SELECTED WORKS</span>
+          </div>
+
+          <h1 class="font-display font-black text-4xl sm:text-6xl lg:text-[64px] leading-[1.05] tracking-tight text-ink">
+            万柯<br/>
+            <span class="text-magenta" data-i18n="hero_title">社媒与内容增长</span>
+          </h1>
+
+          <p class="font-display text-sm sm:text-base font-bold tracking-wide text-ink/80 bg-soft/90 inline-block px-3 py-1.5 rounded border border-ink/20">
+            Overseas SNS Operation / Content-led Growth / KOL Marketing / E-commerce Visual
+          </p>
+
+          <p class="text-sm sm:text-base text-ink/85 max-w-xl leading-relaxed" data-i18n="hero_desc">
+            聚焦海内外内容生态的从 0 到 1 冷启动与精准转化。擅长通过算法推荐结构拆解、搜索长尾关键词布局与海外达人矩阵策略，驱动可验证的自然流量与留资增长。
+          </p>
+
+          <!-- 3大核心模块入口 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <button onclick="goToSection(2)" class="sticker-card p-3.5 rounded-xl text-left cursor-pointer group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-xs font-bold text-magenta">01</span>
+                <span class="text-xs font-mono group-hover:translate-x-1 transition">→</span>
+              </div>
+              <div class="font-bold text-sm" data-i18n="toc_1">平台增长运营</div>
+              <div class="text-xs text-muted mt-0.5">Threads · 小红书 · 公众号</div>
+            </button>
+
+            <button onclick="goToSection(4)" class="sticker-card p-3.5 rounded-xl text-left cursor-pointer group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-xs font-bold text-magenta">02</span>
+                <span class="text-xs font-mono group-hover:translate-x-1 transition">→</span>
+              </div>
+              <div class="font-bold text-sm" data-i18n="toc_2">图文与视频制作</div>
+              <div class="text-xs text-muted mt-0.5">AIGC创意 · 长图文排版 · A+设计页面</div>
+            </button>
+
+            <button onclick="goToSection(5)" class="sticker-card p-3.5 rounded-xl text-left cursor-pointer group">
+              <div class="flex items-center justify-between mb-1">
+                <span class="font-mono text-xs font-bold text-magenta">03</span>
+                <span class="text-xs font-mono group-hover:translate-x-1 transition">→</span>
+              </div>
+              <div class="font-bold text-sm" data-i18n="toc_3">海外达人营销</div>
+              <div class="text-xs text-muted mt-0.5">US Market · 竞品矩阵推演</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- 右侧拼贴视觉卡片 -->
+        <div class="lg:col-span-5 relative">
+          <div class="sticker-card p-3 rounded-2xl rotate-1 relative">
+            <!-- 异形角标 -->
+            <div class="absolute -top-3 -right-3 z-10 bg-magenta text-white font-mono text-xs font-bold px-3 py-1 cutout-badge border border-ink">
+              OPEN TO WORK
+            </div>
+            <div class="asset-box aspect-[4/3] rounded-xl border border-ink/20" data-fallback="assets/slide-01.png (Cover Visual)">
+              <img loading="eager"  src="./assets/slide-01.png" alt="Portfolio Cover" class="w-full h-full object-cover" onerror="this.parentElement.classList.add('is-missing');  ;" />
+            </div>
+            <div class="mt-3 flex items-center justify-between px-1 text-xs font-mono text-muted">
+              <span>FOCUS: ORGANIC GROWTH & ROI</span>
+              <span class="text-ink font-bold">SCROLL ↓</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 2: CORE METRICS ==================== -->
+    <section id="sec-metrics" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full space-y-6">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+          <div>
+            <span class="font-mono text-xs font-bold uppercase tracking-widest text-magenta" data-i18n="metrics_eyebrow">VERIFIED PERFORMANCE · 核心实战数据</span>
+            <h2 class="font-display font-black text-3xl sm:text-4xl text-ink mt-1" data-i18n="metrics_title">冷启动与自然流量关键指标</h2>
+          </div>
+          <p class="text-xs sm:text-sm text-muted max-w-md" data-i18n="metrics_sub">
+            无广告投放、无私域导流条件下的纯自然流量测试，验证跨平台内容分发与算法契合度。
+          </p>
+        </div>
+
+        <!-- 8大核心滚动数字卡 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
+          <div class="sticker-card p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m1_label">Threads 60天总曝光</div>
+            <div class="tabular-nums text-2xl sm:text-4xl font-bold text-magenta mt-2">
+              <span class="count-up" data-target="210" data-suffix="万+">210万+</span>
+            </div>
+            <div class="text-[11px] text-ink/70 mt-1.5 font-mono">0 AD SPEND / ORGANIC</div>
+          </div>
+
+          <div class="sticker-card p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m2_label">海外独立运营周期</div>
+            <div class="tabular-nums text-2xl sm:text-4xl font-bold text-ink mt-2">
+              <span class="count-up" data-target="60" data-suffix="天">60天</span>
+            </div>
+            <div class="text-[11px] text-ink/70 mt-1.5 font-mono">META THREADS TEST</div>
+          </div>
+
+          <div class="sticker-card p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m3_label">高频内容测试产出</div>
+            <div class="tabular-nums text-2xl sm:text-4xl font-bold text-ink mt-2">
+              <span class="count-up" data-target="56" data-suffix="篇">56篇</span>
+            </div>
+            <div class="text-[11px] text-ink/70 mt-1.5 font-mono">33 TEXT + 23 VISUAL</div>
+          </div>
+
+          <div class="sticker-card p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m4_label">纯自然冷启动涨粉</div>
+            <div class="tabular-nums text-2xl sm:text-4xl font-bold text-ink mt-2">
+              0→<span class="count-up" data-target="104" data-suffix="">104</span>
+            </div>
+            <div class="text-[11px] text-ink/70 mt-1.5 font-mono">NON-NICHE COLD START</div>
+          </div>
+
+          <div class="soft-panel p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m5_label">单篇爆款最高浏览</div>
+            <div class="tabular-nums text-2xl sm:text-3xl font-bold text-ink mt-2">
+              <span class="count-up" data-target="101668" data-comma="true">101,668</span>
+            </div>
+            <div class="text-[11px] text-magenta font-mono mt-1.5">+227.0% VS AVG</div>
+          </div>
+
+          <div class="soft-panel p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m6_label">单篇触达独立人数</div>
+            <div class="tabular-nums text-2xl sm:text-3xl font-bold text-ink mt-2">
+              <span class="count-up" data-target="93526" data-comma="true">93,526</span>
+            </div>
+            <div class="text-[11px] text-magenta font-mono mt-1.5">+252.1% REACH</div>
+          </div>
+
+          <div class="soft-panel p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m7_label">系统首页推荐占比</div>
+            <div class="tabular-nums text-2xl sm:text-3xl font-bold text-magenta mt-2">
+              <span class="count-up" data-target="98.24" data-decimals="2" data-suffix="%">98.24%</span>
+            </div>
+            <div class="text-[11px] text-ink/70 font-mono mt-1.5">ALGORITHMIC FEED</div>
+          </div>
+
+          <div class="soft-panel p-4 sm:p-5 rounded-2xl">
+            <div class="text-xs font-bold text-muted" data-i18n="m8_label">爆款帖单篇点赞率</div>
+            <div class="tabular-nums text-2xl sm:text-3xl font-bold text-ink mt-2">
+              <span class="count-up" data-target="4.12" data-decimals="2" data-suffix="%">4.12%</span>
+            </div>
+            <div class="text-[11px] text-ink/70 font-mono mt-1.5">AVG ENGAGEMENT 2.1%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 3: THREADS CASE STUDY ==================== -->
+    <section id="sec-threads" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <!-- 左侧洞察 Tab 截图区 -->
+        <div class="lg:col-span-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="inline-flex bg-sticker p-1 rounded-xl border-[1.5px] border-ink shadow-[2px_2px_0_#202124]">
+              <button onclick="switchThreadsTab('exposure')" id="tab-btn-exposure" class="threads-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-magenta text-white transition cursor-pointer" data-i18n="th_tab_1">曝光洞察</button>
+              <button onclick="switchThreadsTab('engagement')" id="tab-btn-engagement" class="threads-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-ink hover:bg-soft transition cursor-pointer" data-i18n="th_tab_2">互动表现</button>
+              <button onclick="switchThreadsTab('audience')" id="tab-btn-audience" class="threads-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-ink hover:bg-soft transition cursor-pointer" data-i18n="th_tab_3">用户画像</button>
+            </div>
+            <span class="text-xs font-mono text-muted" data-i18n="click_zoom">点击卡片放大洞察 ↗</span>
+          </div>
+
+          <!-- 可点击放大的统计截图卡 -->
+          <div onclick="openThreadsModal()" class="sticker-card p-3 rounded-2xl cursor-zoom-in group relative">
+            <div class="asset-box aspect-[16/10] rounded-xl border border-ink/15" id="threadsAssetBox" data-fallback="assets/slide-05.png (Threads Insight Screenshot)">
+              <img loading="eager"  id="threadsImg" src="./assets/slide-05.png" alt="Threads Analytics" class="w-full h-full object-contain bg-white" onerror="this.parentElement.classList.add('is-missing');  ;" />
+            </div>
+            <div class="mt-2.5 flex items-center justify-between px-1">
+              <span id="threadsCaption" class="text-xs font-bold text-ink">首页推荐流量占比 98.24%，纯自然触达 93,526 人</span>
+              <span class="bg-ink text-white text-[11px] font-mono px-2 py-0.5 rounded group-hover:bg-magenta transition" data-i18n="view_conclusion">查看打法结论</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧打法拆解结论 -->
+        <div class="lg:col-span-6 space-y-4">
+          <span class="font-mono text-xs font-bold text-magenta uppercase tracking-wider">CASE 01 · META THREADS ORGANIC GROWTH</span>
+          <h2 class="font-display font-black text-3xl sm:text-4xl text-ink leading-tight" data-i18n="th_title">
+            海外社媒冷启动：<br/>圈层情绪共鸣与信息流结构
+          </h2>
+
+          <div class="soft-panel p-4 rounded-xl space-y-2.5 text-sm leading-relaxed">
+            <div class="flex items-start gap-2.5">
+              <span class="font-mono font-bold text-magenta mt-0.5">01</span>
+              <p data-i18n="th_p1"><strong>算法推荐验证：</strong>针对 Threads“去中心化、重社交、轻叙事”机制，单篇爆款获得 <strong>101,668</strong> 浏览，其中 <strong>98.24%</strong> 来自系统首页推荐，证实内容结构高度契合信息流分发逻辑。</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <span class="font-mono font-bold text-magenta mt-0.5">02</span>
+              <p data-i18n="th_p2"><strong>低门槛互动设计：</strong>切入特定圈层高共鸣话题（轻吐槽/观点站队），将用户点赞率拉升至 <strong>4.12%</strong>（账号平均互动率 2.1%），有效撬动二次社交扩散。</p>
+            </div>
+            <div class="flex items-start gap-2.5">
+              <span class="font-mono font-bold text-magenta mt-0.5">03</span>
+              <p data-i18n="th_p3"><strong>受众精准度：</strong>受众画像中 <strong>97%</strong> 集中在 18–34 岁核心年轻消费群体（18–24 岁占 57.7%，25–34 岁占 39.3%），具备极高海外年轻市场种草潜力。</p>
+            </div>
+          </div>
+
+          <button onclick="openThreadsModal()" class="inline-flex items-center gap-2 bg-ink text-white hover:bg-magenta px-4 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer">
+            <span data-i18n="th_modal_btn">展开完整数据弹窗与复盘结论</span>
+            <span>↗</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 4: XIAOHONGSHU CASE STUDY ==================== -->
+    <section id="sec-xhs" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <!-- 左侧：三账号手机壳切换 -->
+        <div class="lg:col-span-5 flex flex-col items-center">
+          <!-- 账号切换胶囊 -->
+          <div class="flex flex-wrap justify-center gap-1.5 mb-3">
+            <button onclick="switchXhsAccount(0)" id="xhs-acc-0" class="xhs-acc-btn px-3 py-1 rounded-full text-xs font-bold bg-magenta text-white border border-ink cursor-pointer">优木工房 · 家居</button>
+            <button onclick="switchXhsAccount(1)" id="xhs-acc-1" class="xhs-acc-btn px-3 py-1 rounded-full text-xs font-bold bg-soft text-ink border border-ink cursor-pointer">一口吃不下馒头 · 留学IP</button>
+            <button onclick="switchXhsAccount(2)" id="xhs-acc-2" class="xhs-acc-btn px-3 py-1 rounded-full text-xs font-bold bg-soft text-ink border border-ink cursor-pointer">上海艾十一 · 舞蹈机构</button>
+          </div>
+
+          <!-- 拟物手机壳框架 -->
+          <div class="w-[270px] sm:w-[290px] bg-ink p-2.5 rounded-[34px] shadow-[8px_8px_0_#D92D6E] border-2 border-ink">
+            <div class="bg-white rounded-[26px] overflow-hidden">
+              <!-- 手机刘海状态栏 -->
+              <div class="bg-soft px-4 py-1.5 flex items-center justify-between text-[10px] font-mono border-b border-ink/10">
+                <span>9:41</span>
+                <span class="w-14 h-3 bg-ink rounded-full"></span>
+                <span>5G</span>
+              </div>
+              <!-- 账号截图区域 -->
+              <div class="asset-box aspect-[9/14] w-full" id="xhsPhoneBox" data-fallback="assets/slide-06.png (XHS Account)">
+                <img loading="eager"  id="xhsPhoneImg" src="./assets/slide-06.png" alt="Xiaohongshu Account" class="w-full h-full object-cover object-top" onerror="this.parentElement.classList.add('is-missing');  ;" />
+              </div>
+              <!-- 底部账号摘要条 -->
+              <div class="p-3 bg-sticker border-t border-ink/15">
+                <div class="flex items-center justify-between">
+                  <span id="xhsAccName" class="font-bold text-xs text-ink">优木工房全屋定制</span>
+                  <span id="xhsAccMetric" class="font-mono text-[11px] font-bold text-magenta">粉丝 3万→8.6万</span>
+                </div>
+                <p id="xhsAccTag" class="text-[11px] text-muted mt-1">垂类定制家居 · 工具型长尾搜索引流</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：视频 5 步 Accordion + 图文双动机标签 -->
+        <div class="lg:col-span-7 space-y-4">
+          <div>
+            <span class="font-mono text-xs font-bold text-magenta uppercase">CASE 02 · XIAOHONGSHU SEARCH & CONVERSION</span>
+            <h2 class="font-display font-black text-2xl sm:text-3xl text-ink mt-1">小红书：工具型长尾爆款与评论区留资</h2>
+            <p class="text-xs sm:text-sm text-muted mt-1">不盲目追求泛娱乐高粉，聚焦<strong>精准垂类心智、搜索场景词卡位与评论区私域转化闭环</strong>。</p>
+          </div>
+
+          <!-- 视频爆款 5 步可展开 Accordion -->
+          <div class="sticker-card p-4 rounded-2xl space-y-2">
+            <div class="flex items-center justify-between pb-1 border-b border-ink/15">
+              <span class="text-xs font-bold text-ink">🎬 视频爆款拆解（曝光 20万 / 收藏 1.2万 / 赞 7785）</span>
+              <span class="font-mono text-[11px] text-magenta">点击展开 5 步结构</span>
+            </div>
+
+            <div id="xhsAccordion" class="divide-y divide-ink/10 text-xs">
+              <!-- JS 渲染 5 步 -->
+            </div>
+          </div>
+
+          <!-- 图文爆款：收藏动机 vs 留资动机 -->
+          <div class="soft-panel p-4 rounded-2xl space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-ink">📑 图文爆款拆解（0→1126粉 · 单篇曝光3万 / 收藏912 / 评论133）</span>
+              <span class="font-mono text-[11px] bg-magenta/10 text-magenta px-2 py-0.5 rounded font-bold">双动机引擎</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+              <div class="bg-white/80 p-3 rounded-xl border border-ink/15">
+                <div class="font-bold text-magenta mb-1">📌 收藏动机（工具属性）</div>
+                <p class="text-ink/80 leading-relaxed">提供 4–10 月全流程申请时间轴 Checklist 与踩坑修正表，给出可直接迁移的排期标准，提升长尾搜索复访率。</p>
+              </div>
+              <div class="bg-white/80 p-3 rounded-xl border border-ink/15">
+                <div class="font-bold text-ink mb-1">💬 留资动机（信任与互惠）</div>
+                <p class="text-ink/80 leading-relaxed">“双一流+无Paper斩获港大全奖PhD”强反差背书，将服务自然植入个人开销叙事，置顶评论区温和引导私信对接。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ==================== SECTION 5: AIGC CAT CANDY IP ANIMATION ==================== -->
+    <section id="sec-aigc" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full space-y-5">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-bold text-magenta uppercase" data-i18n="aigc_eyebrow"> CASE 04 · AIGC IP ANIMATION · 3:4 / 8S</span>
+              <span class="bg-ink text-white text-[11px] font-mono px-2 py-0.5 rounded">NCT DREAM IP · CANDY CHARM</span>
+            </div>
+            <h2 class="font-display font-black text-3xl sm:text-4xl text-ink mt-1" data-i18n="aigc_title">AIGC 创意 IP 动画：猫咪糖果罐</h2>
+          </div>
+          <p class="text-xs sm:text-sm text-muted max-w-md" data-i18n="aigc_sub">
+            以Pintertest设计绘画，Nano Banana辅助生成的 8 秒 3:4 创意动效。
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+          <!-- 左侧：3:4 竖屏视频播放器与海报切换卡 (6 cols) -->
+          <div class="lg:col-span-6 flex flex-col items-center">
+            <div class="sticker-card p-3.5 sm:p-4 rounded-2xl w-full max-w-[380px] space-y-3">
+              <div class="flex items-center justify-between text-[11px] font-mono text-muted px-0.5">
+                <span>FORMAT: 3:4 · 8S LOOP</span>
+                <span class="text-magenta font-bold">2D + CANDY 3D</span>
+              </div>
+
+              <!-- 3:4 视频容器 -->
+              <div id="aigcVideoBox" class="asset-box aspect-[3/4] w-full rounded-xl border border-ink/20 bg-ink flex items-center justify-center" data-fallback="assets/aigc-cat-candy.mp4 (请放入 3:4 / 8s 视频文件)">
+                <video
+                  id="aigcCatVideo"
+                  controls
+                  loop
+                  playsinline
+                  preload="metadata"
+                  poster="./assets/aigc-cat-candy-poster.png"
+                  class="w-full h-full object-contain bg-ink"
+                  onerror="this.style.display='none'; this.parentElement.classList.add('is-missing');"
+                >
+                  <source src="./assets/aigc-cat-candy.mp4" type="video/mp4" />
+                  当前浏览器不支持 HTML5 视频播放。
+                </video>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 px-0.5 text-xs">
+                <span class="font-bold text-ink truncate">猫咪糖果罐 · 立体糖果饰品质感</span>
+                <button onclick="openLightbox('./assets/aigc-cat-candy-poster.png', '猫咪糖果罐 · 3:4 创意视觉预览')" class="bg-ink text-white hover:bg-magenta font-mono text-[11px] px-2.5 py-1 rounded transition cursor-pointer shrink-0">
+                  放大封面 ↗
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：创意来源与制作逻辑说明 (6 cols) -->
+          <div class="lg:col-span-6 soft-panel p-5 rounded-2xl space-y-3">
+            <div>
+              <span class="font-mono text-xs font-bold text-magenta">CREATIVE CONCEPT & WORKFLOW</span>
+              <h3 class="font-bold text-lg text-ink mt-1">创意来源与立体糖果化设计逻辑</h3>
+            </div>
+
+            <div class="space-y-2.5 text-xs">
+              <div class="bg-sticker p-3.5 rounded-xl border border-ink/20">
+                <div class="font-bold text-ink flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[11px]">01</span>
+                  <span>IP 灵感来源：NCT DREAM 玩偶形象</span>
+                </div>
+                <p class="text-ink/80 mt-1.5 leading-relaxed">
+                  借力 NCT DREAM 玩偶 IP 自带的萌系辨识度与粉丝圈层好感度，把角色特征转化为“猫咪糖果罐”拟物意象，既保留粉丝一眼能认出的情绪符号，又赋予其独立可延展的周边/饰品视觉形态。
+                </p>
+              </div>
+
+              <div class="bg-sticker p-3.5 rounded-xl border border-ink/20">
+                <div class="font-bold text-ink flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[11px]">02</span>
+                  <span>核心公式：平面插画 + 材质参考 = 立体糖果饰品</span>
+                </div>
+                <p class="text-ink/80 mt-1.5 leading-relaxed">
+                  先以平面插画确立猫咪糖果罐的造型轮廓与构图比例，再引入糖果/亚克力/釉面饰品材质参考，让扁平线稿升级为通透、有光泽与微缩手感的三维糖果饰品质感，强化“可触摸”的视觉爽感。
+                </p>
+              </div>
+              <div class="bg-sticker p-3.5 rounded-xl border border-ink/20">
+          <div class="font-bold text-ink flex items-center gap-2">
+                  <span class="w-5 h-5 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[11px]">03</span>
+                  <span>8 秒 3:4 短片节奏：高密度信息与循环适配</span>
+                </div>
+                <p class="text-ink/80 mt-1.5 leading-relaxed">
+                  3:4 竖屏贴合移动端与社媒信息流视觉占屏比；在 8 秒极短时长内聚焦“形象亮相—糖果材质质感呈现—动态演绎”的紧凑节拍，适合作为小红书/海外社媒的吸睛短钩子或循环动态素材。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+      
+    <!-- ==================== SECTION 5: VISUAL & E-COMMERCE DESIGN ==================== -->
+    <section id="sec-design" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full space-y-5">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+          <div>
+            <span class="font-mono text-xs font-bold text-magenta uppercase"> CASE 04 · EDITORIAL & E-COMMERCE VISUAL</span>
+            <h2 class="font-display font-black text-3xl sm:text-4xl text-ink mt-1">长图文排版与A+设计页面</h2>
+          </div>
+          <span class="text-xs font-mono text-muted">← 左右拖拽浏览画廊 · 点击查看大图 →</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+          <!-- 左侧：横向拖拽画廊 (8 cols) -->
+          <div class="lg:col-span-8">
+            <div id="dragGallery" class="flex gap-4 overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing pb-2 select-none">
+              <!-- Card 1: 公众号排版 -->
+              <div class="min-w-[270px] sm:min-w-[310px] sticker-card p-3 rounded-2xl flex-shrink-0 flex flex-col justify-between">
+                <div onclick="openLightbox('./assets/slide-11.png', '公众号长图文排版：新西兰奥克兰租房指南')" class="asset-box aspect-[4/3] rounded-xl border border-ink/15 cursor-zoom-in" data-fallback="assets/slide-11.png (WeChat Article Layout)">
+                  <img loading="eager"  src="./assets/slide-11.png" alt="WeChat Layout" class="w-full h-full object-cover pointer-events-none" onerror="this.parentElement.classList.add('is-missing');  ;" />
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm">公众号视觉排版 · 留学移民指南</span>
+                    <span class="font-mono text-[10px] bg-soft px-2 py-0.5 rounded border border-ink/20">EDITORIAL</span>
+                  </div>
+                  <p class="text-xs text-muted mt-1">模块化色块区分区域攻略、平台对比与避坑贴士，强化长文阅读节奏与品牌转化引导。</p>
+                </div>
+              </div>
+
+              <!-- Card 2: Nitze 详情页 1 -->
+              <div class="min-w-[270px] sm:min-w-[310px] sticker-card p-3 rounded-2xl flex-shrink-0 flex flex-col justify-between">
+                <div onclick="openLightbox('./assets/slide-12-1.png', '跨境电商详情页：Nitze Mini L-Shaped Mount Plate')" class="asset-box aspect-[4/3] rounded-xl border border-ink/15 cursor-zoom-in" data-fallback="assets/slide-12-1.png (Nitze Product Page)">
+                  <img loading="eager"  src="./assets/slide-12-1.png" alt="Nitze Detail Page" class="w-full h-full object-cover pointer-events-none" onerror="this.parentElement.classList.add('is-missing');  ;" />
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm">Nitze 摄影配件 · 英文详情页</span>
+                    <span class="font-mono text-[10px] bg-magenta text-white px-2 py-0.5 rounded">AMAZON / DTC</span>
+                  </div>
+                  <p class="text-xs text-muted mt-1">针对海外影视器材买家，突出 1/4" & 3/8" 通用接口、承重参数与多机位扩展场景。</p>
+                </div>
+              </div>
+
+              <!-- Card 3: Nitze 详情页 2 -->
+              <div class="min-w-[270px] sm:min-w-[310px] sticker-card p-3 rounded-2xl flex-shrink-0 flex flex-col justify-between">
+                <div onclick="openLightbox('./assets/slide-12-2.png', '跨境电商详情页：Universal Tablet Cage')" class="asset-box aspect-[4/3] rounded-xl border border-ink/15 cursor-zoom-in" data-fallback="assets/slide-12-2.png (Tablet Cage Specs)">
+                  <img loading="eager"  src="./assets/slide-12-2.png" alt="Tablet Cage Layout" class="w-full h-full object-cover object-right pointer-events-none" onerror="this.parentElement.classList.add('is-missing');  ;" />
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm">Universal Tablet Cage 规格拆解</span>
+                    <span class="font-mono text-[10px] bg-soft px-2 py-0.5 rounded border border-ink/20">CONVERSION</span>
+                  </div>
+                  <p class="text-xs text-muted mt-1">清单化 In The Box 配件展示与三步安装图示，降低海外用户售后咨询成本。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：电商详情页 3 大设计标注 (4 cols) -->
+          <div class="lg:col-span-4 soft-panel p-5 rounded-2xl flex flex-col justify-between space-y-3">
+            <div>
+              <span class="font-mono text-xs font-bold text-magenta">E-COM VISUAL ANNOTATIONS</span>
+              <h3 class="font-bold text-base text-ink mt-1">A+设计页面 3 项核心设计标注</h3>
+            </div>
+
+            <div class="space-y-3 text-xs">
+              <div class="bg-sticker p-3 rounded-xl border border-ink/20">
+                <div class="font-bold text-ink flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[10px]">1</span>
+                  卖点层级（Visual Hierarchy）
+                </div>
+                <p class="text-ink/80 mt-1 leading-relaxed">首屏直击“Small Bracket, Big Capacity”核心利益点，次屏承接可伸缩定位销与多规格螺孔，符合海外买家 F 型扫视路径。</p>
+              </div>
+
+              <div class="bg-sticker p-3 rounded-xl border border-ink/20">
+                <div class="font-bold text-ink flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[10px]">2</span>
+                  移动端可读（Mobile Readability）
+                </div>
+                <p class="text-ink/80 mt-1 leading-relaxed">高对比度无衬线英文标题 + 图标化承重/尺寸徽章（2 kg / 4.4 lb），确保在 Amazon 手机端小屏浏览时核心参数一秒识别。</p>
+              </div>
+
+              <div class="bg-sticker p-3 rounded-xl border border-ink/20">
+                <div class="font-bold text-ink flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded-full bg-magenta text-white inline-flex items-center justify-center font-mono text-[10px]">3</span>
+                  合规信息密度（Compliance & Specs）
+                </div>
+                <p class="text-ink/80 mt-1 leading-relaxed">清晰标注兼容机型（9–11" iPad 系列）、材质与包装清单（In The Box），平衡视觉留白与海外平台参数合规要求，减少退货率。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 6: KOL MARKETING STRATEGY ==================== -->
+    <section id="sec-kol" class="snap-section">
+      <div class="max-w-6xl mx-auto w-full space-y-4">
+        <!-- 标题与合规方法示范声明 -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-2">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-bold text-magenta uppercase"> CASE 05 · US ROBOT VACUUM KOL STRATEGY</span>
+              <span class="bg-ink text-white text-[11px] font-mono px-2 py-0.5 rounded" data-i18n="kol_disclaimer">方法示范 · 策略推演 / 公开数据整理</span>
+            </div>
+            <h2 class="font-display font-black text-2xl sm:text-3xl text-ink mt-1" data-i18n="kol_title">美国市场扫地机器人 KOL 营销策略推演</h2>
+          </div>
+          <p class="text-xs text-muted max-w-sm" data-i18n="kol_note">注：本章节以 Dreame 公开社媒 23 条达人样本为研究对象，仅作海外 KOL 投放分析方法论示范。</p>
+        </div>
+
+        <!-- 8 步 KOL 工作流 Timeline (Hover / Click 展开) -->
+        <div class="soft-panel p-3.5 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-ink" data-i18n="kol_wf_label">全链路 8 步 KOL 运营工作流（悬停或点击节点查看执行标准）</span>
+            <span id="wfActiveStepTitle" class="font-mono text-xs font-bold text-magenta">01 市场调研 · 深挖 Google Trends 与社媒热点</span>
+          </div>
+          <div id="kolTimeline" class="grid grid-cols-4 sm:grid-cols-8 gap-2">
+            <!-- JS 渲染 8 步 -->
+          </div>
+        </div>
+
+        <!-- 下半部分：左侧四组数据切换图表 + 右侧三层点击金字塔 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+          <!-- 左侧：竞品 4 组数据切换图表 (7 cols) -->
+          <div class="lg:col-span-7 sticker-card p-4 rounded-2xl flex flex-col justify-between">
+            <div>
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <span class="text-xs font-bold text-ink" data-i18n="chart_header">Dreame 6月投放样本拆解（公开数据整理）</span>
+                <div class="flex flex-wrap gap-1">
+                  <button onclick="switchKolChart('model')" id="kbtn-model" class="kol-chart-btn px-2.5 py-1 rounded text-[11px] font-bold bg-magenta text-white cursor-pointer" data-i18n="c_btn_1">①型号曝光</button>
+                  <button onclick="switchKolChart('category')" id="kbtn-category" class="kol-chart-btn px-2.5 py-1 rounded text-[11px] font-bold bg-soft text-ink cursor-pointer" data-i18n="c_btn_2">②红人类别</button>
+                  <button onclick="switchKolChart('scene')" id="kbtn-scene" class="kol-chart-btn px-2.5 py-1 rounded text-[11px] font-bold bg-soft text-ink cursor-pointer" data-i18n="c_btn_3">③内容场景</button>
+                  <button onclick="switchKolChart('tier')" id="kbtn-tier" class="kol-chart-btn px-2.5 py-1 rounded text-[11px] font-bold bg-soft text-ink cursor-pointer" data-i18n="c_btn_4">④粉丝等级</button>
+                </div>
+              </div>
+
+              <!-- 动态条形图容器 -->
+              <div id="kolChartBars" class="space-y-2.5 my-2"></div>
+            </div>
+
+            <div id="kolChartInsight" class="mt-3 pt-2.5 border-t border-ink/15 text-xs text-ink/85 bg-soft/70 p-2.5 rounded-lg">
+              <strong>策略推演结论：</strong>X60 Ultra 曝光（169万）断层领先，新品期投放预算应向旗舰主力机型高度倾斜。
+            </div>
+          </div>
+
+          <!-- 右侧：达人金字塔三层点击展开目标 (5 cols) -->
+          <div class="lg:col-span-5 soft-panel p-4 rounded-2xl flex flex-col justify-between space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-ink" data-i18n="pyr_title">达人金字塔配置模型（点击展开目标）</span>
+              <span class="font-mono text-[10px] text-magenta">PYRAMID MIX</span>
+            </div>
+
+            <div class="space-y-2 my-auto">
+              <!-- Tier 1: 头部 -->
+              <div onclick="togglePyramid(0)" class="cursor-pointer bg-sticker border-[1.5px] border-ink rounded-xl p-3 mx-auto w-[82%] transition hover:border-magenta">
+                <div class="flex items-center justify-between text-xs font-bold">
+                  <span>▲ 头部达人 Mega（2–3位）</span>
+                  <span class="font-mono text-magenta">占13% · 35%互动</span>
+                </div>
+                <p id="pyr-desc-0" class="text-[11px] text-ink/80 mt-1.5 leading-relaxed">
+                  <strong>核心目标：引爆话题。</strong>利用大基数粉丝迅速拉升品牌声量，制造全网热议，建立北美市场行业地位认知。
+                </p>
+              </div>
+
+              <!-- Tier 2: 腰部 -->
+              <div onclick="togglePyramid(1)" class="cursor-pointer bg-sticker border-[1.5px] border-ink rounded-xl p-3 mx-auto w-[91%] transition hover:border-magenta">
+                <div class="flex items-center justify-between text-xs font-bold">
+                  <span>▲ 腰部达人 Mid（10–15位）</span>
+                  <span class="font-mono text-magenta">占43% · 50%互动</span>
+                </div>
+                <p id="pyr-desc-1" class="hidden text-[11px] text-ink/80 mt-1.5 leading-relaxed">
+                  <strong>核心目标：精准转化。</strong>聚焦科技与家居垂直博主，通过深度测评与功能拆解消除顾虑，承担主力种草转化。
+                </p>
+              </div>
+
+              <!-- Tier 3: 尾部 -->
+              <div onclick="togglePyramid(2)" class="cursor-pointer bg-sticker border-[1.5px] border-ink rounded-xl p-3 mx-auto w-full transition hover:border-magenta">
+                <div class="flex items-center justify-between text-xs font-bold">
+                  <span>▲ 尾部/KOC Micro（50+位）</span>
+                  <span class="font-mono text-magenta">占43% · 长尾口碑</span>
+                </div>
+                <p id="pyr-desc-2" class="hidden text-[11px] text-ink/80 mt-1.5 leading-relaxed">
+                  <strong>核心目标：口碑渗透。</strong>真实养宠/多孩家庭日常分享，营造“身边人都在用”的氛围并沉淀可复用 UGC 素材。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SECTION 7: CONTACT & FOOTER ==================== -->
+    <section id="sec-contact" class="snap-section">
+      <div class="max-w-4xl mx-auto w-full text-center space-y-6">
+        <div class="inline-flex items-center gap-2 bg-sticker border-[1.5px] border-ink px-4 py-1.5 rounded-full shadow-[3px_3px_0_#202124]">
+          <span class="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse"></span>
+          <span class="font-mono text-xs font-bold" data-i18n="contact_status">AVAILABLE FOR OVERSEAS SNS & GROWTH ROLES</span>
+        </div>
+
+        <h2 class="font-display font-black text-4xl sm:text-6xl text-ink tracking-tight" data-i18n="contact_title">
+          感谢观看<br/>欢迎联系
+        </h2>
+
+        <!-- 邮箱与操作按钮组 -->
+        <div class="sticker-card p-6 sm:p-8 rounded-3xl max-w-2xl mx-auto space-y-5">
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div class="bg-white px-4 py-2.5 rounded-xl border border-ink/20 font-mono text-sm sm:text-base font-bold select-all" id="emailText">
+              2388719062@qq.com
+            </div>
+            <button onclick="copyEmail()" id="copyBtn" class="w-full sm:w-auto bg-magenta text-white border-[1.5px] border-ink px-5 py-2.5 rounded-xl text-sm font-bold shadow-[3px_3px_0_#202124] hover:opacity-95 active:translate-y-0.5 transition cursor-pointer" data-i18n="btn_copy">
+              复制邮箱地址
+            </button>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-2 border-t border-ink/15">
+            <a href="./portfolio.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-soft hover:bg-white border-[1.5px] border-ink px-4 py-2 rounded-xl text-xs font-bold shadow-[2px_2px_0_#202124] transition">
+  <span>↗</span>
+  <span data-i18n="btn_pdf">查看完整 PDF 作品集</span>
+</a>
+
+            <button onclick="goToSection(0)" class="inline-flex items-center gap-2 bg-ink text-white hover:bg-magenta border-[1.5px] border-ink px-4 py-2 rounded-xl text-xs font-bold shadow-[2px_2px_0_#202124] transition cursor-pointer">
+              <span>↑</span>
+              <span data-i18n="btn_top">返回顶部</span>
+            </button>
+          </div>
+        </div>
+
+        <footer class="text-xs font-mono text-muted pt-4">
+          © 2026 WANKE · DESIGNED & ENGINEERED AS A STATIC PORTFOLIO
+        </footer>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL: THREADS INSIGHT & LIGHTBOX ==================== -->
+  <div id="globalModal" onclick="closeModal(event)" class="fixed inset-0 z-50 hidden bg-ink/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div onclick="event.stopPropagation()" class="bg-sticker border-2 border-ink rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-[8px_8px_0_#D92D6E] space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-ink/15 pb-3">
+        <h3 id="modalTitle" class="font-display font-bold text-lg text-ink">Threads 爆款洞察详情</h3>
+        <button onclick="forceCloseModal()" class="w-8 h-8 rounded-full bg-soft border border-ink font-mono font-bold hover:bg-magenta hover:text-white transition cursor-pointer">✕</button>
+      </div>
+      <div class="asset-box rounded-xl border border-ink/20 max-h-[52vh] flex items-center justify-center bg-white" id="modalImgBox" data-fallback="Insight Preview">
+        <img loading="eager"  id="modalImg" src="" alt="Preview" class="max-h-[50vh] w-auto object-contain" onerror="this.parentElement.classList.add('is-missing');  ;" />
+      </div>
+      <div id="modalBody" class="bg-soft p-4 rounded-xl border border-ink/15 text-xs sm:text-sm leading-relaxed text-ink">
+        <!-- 动态注入打法结论 -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 1. 双语词典 (EN / CN) ====================
+    let currentLang = 'cn';
+    const i18n = {
+      cn: {
+        nav_hire: '联系合作',
+        hero_badge: 'PORTFOLIO · 个人作品集',
+        hero_title: '社媒与内容增长',
+        hero_desc: '聚焦海内外内容生态的从 0 到 1 冷启动与精准转化。擅长通过算法推荐结构拆解、搜索长尾关键词布局与海外达人矩阵策略，驱动可验证的自然流量与留资增长。',
+        toc_1: '平台增长运营',
+        toc_2: '图文与视频制作',
+        toc_3: '海外达人营销',
+        metrics_eyebrow: 'VERIFIED PERFORMANCE · 核心实战数据',
+        metrics_title: '冷启动与自然流量关键指标',
+        metrics_sub: '无广告投放、无私域导流条件下的纯自然流量测试，验证跨平台内容分发与算法契合度。',
+        m1_label: 'Threads 60天总曝光',
+        m2_label: '海外独立运营周期',
+        m3_label: '高频内容测试产出',
+        m4_label: '纯自然冷启动涨粉',
+        m5_label: '单篇爆款最高浏览',
+        m6_label: '单篇触达独立人数',
+        m7_label: '系统首页推荐占比',
+        m8_label: '爆款帖单篇点赞率',
+        th_tab_1: '曝光洞察',
+        th_tab_2: '互动表现',
+        th_tab_3: '用户画像',
+        click_zoom: '点击卡片放大洞察 ↗',
+        view_conclusion: '查看打法结论',
+        th_title: '海外社媒冷启动：\n圈层情绪共鸣与信息流结构',
+        th_p1: '<strong>算法推荐验证：</strong>针对 Threads“去中心化、重社交、轻叙事”机制，单篇爆款获得 <strong>101,668</strong> 浏览，其中 <strong>98.24%</strong> 来自系统首页推荐，证实内容结构高度契合信息流分发逻辑。',
+        th_p2: '<strong>低门槛互动设计：</strong>切入特定圈层高共鸣话题（轻吐槽/观点站队），将用户点赞率拉升至 <strong>4.12%</strong>（账号平均互动率 2.1%），有效撬动二次社交扩散。',
+        th_p3: '<strong>受众精准度：</strong>受众画像中 <strong>97%</strong> 集中在 18–34 岁核心年轻消费群体（18–24 岁占 57.7%，25–34 岁占 39.3%），具备极高海外年轻市场种草潜力。',
+        th_modal_btn: '展开完整数据弹窗与复盘结论',
+        kol_disclaimer: '方法示范 · 策略推演 / 公开数据整理',
+        kol_title: '美国市场扫地机器人 KOL 营销策略推演',
+        kol_note: '注：本章节以 Dreame 公开社媒 23 条达人样本为研究对象，仅作海外 KOL 投放分析方法论示范。',
+        kol_wf_label: '全链路 8 步 KOL 运营工作流（悬停或点击节点查看执行标准）',
+        chart_header: 'Dreame 6月投放样本拆解（公开数据整理）',
+        c_btn_1: '①型号曝光',
+        c_btn_2: '②红人类别',
+        c_btn_3: '③内容场景',
+        c_btn_4: '④粉丝等级',
+        pyr_title: '达人金字塔配置模型（点击展开目标）',
+        contact_status: 'OPEN TO OVERSEAS SNS & GROWTH ROLES',
+        contact_title: '感谢观看\n欢迎联系',
+        btn_copy: '复制邮箱地址',
+        btn_pdf: '下载完整 PDF 作品集',
+        btn_top: '返回顶部'
+      },
+      en: {
+        nav_hire: 'Contact',
+        hero_badge: 'PORTFOLIO · SELECTED WORKS',
+        hero_title: 'Overseas SNS & Growth',
+        hero_desc: 'Specializing in 0-to-1 organic cold starts and high-intent conversion across global & Chinese social ecosystems. Turning algorithmic feed mechanics, search SEO, and KOL matrices into measurable growth.',
+        toc_1: 'SNS Platform Growth',
+        toc_2: 'Editorial & E-com Visual',
+        toc_3: 'Overseas KOL Strategy',
+        metrics_eyebrow: 'VERIFIED PERFORMANCE · KEY METRICS',
+        metrics_title: 'Organic Cold-Start Benchmarks',
+        metrics_sub: 'Executed with zero paid ads and zero external traffic seeding to validate pure algorithmic distribution.',
+        m1_label: '60-Day Total Views (Threads)',
+        m2_label: 'Independent Test Cycle',
+        m3_label: 'Content Iterations Tested',
+        m4_label: 'Zero-Ad Follower Growth',
+        m5_label: 'Single Viral Post Views',
+        m6_label: 'Unique Accounts Reached',
+        m7_label: 'Home Feed Recommendation',
+        m8_label: 'Viral Post Like Rate',
+        th_tab_1: 'Exposure',
+        th_tab_2: 'Engagement',
+        th_tab_3: 'Audience',
+        click_zoom: 'Click card to inspect ↗',
+        view_conclusion: 'Playbook Takeaway',
+        th_title: 'Threads Cold Start:\nNiche Resonance & Feed-Native Structure',
+        th_p1: '<strong>Algorithm Fit:</strong> Leveraged Threads’ decentralized social graph to reach <strong>101,668</strong> views on a single post—with <strong>98.24%</strong> driven by Home Feed recommendations.',
+        th_p2: '<strong>Low-Friction Hooks:</strong> Crafted relatable fandom commentary that lowered reply/like barriers, achieving a <strong>4.12%</strong> like rate (vs. 2.1% account baseline).',
+        th_p3: '<strong>Core Demographic Match:</strong> <strong>97%</strong> of reached users fall within the 18–34 high-spending cohort (57.7% aged 18–24; 39.3% aged 25–34).',
+        th_modal_btn: 'Open Full Insight & Playbook Modal',
+        kol_disclaimer: 'Methodology Demo · Strategy Deduction / Public Data',
+        kol_title: 'US Robot Vacuum KOL Campaign Strategy',
+        kol_note: 'Note: Based on 23 public Dreame influencer posts in June, structured strictly as a strategic methodology showcase.',
+        kol_wf_label: '8-Step End-to-End KOL Workflow (Hover or click nodes)',
+        chart_header: 'Dreame June Sample Breakdown (Public Data)',
+        c_btn_1: '① Model Views',
+        c_btn_2: '② Creator Niche',
+        c_btn_3: '③ Content Scene',
+        c_btn_4: '④ Follower Tier',
+        pyr_title: 'Creator Pyramid Mix (Click to expand)',
+        contact_status: 'AVAILABLE FOR OVERSEAS SNS & GROWTH ROLES',
+        contact_title: 'Let’s Build Your Brand’s\nNext Global Growth Engine',
+        contact_sub: 'Target Roles: Overseas SNS Operation · Content-led Growth · Global KOL Marketing',
+        btn_copy: 'Copy Email',
+        btn_pdf: 'Download PDF Portfolio',
+        btn_top: 'Back to Top'
+      }
+    };
+
+    function toggleLang() {
+      currentLang = currentLang === 'cn' ? 'en' : 'cn';
+      const btn = document.getElementById('langToggle');
+      btn.innerHTML = currentLang === 'cn'
+        ? 'EN / <span class="text-magenta">CN</span>'
+        : '<span class="text-magenta">EN</span> / CN';
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (i18n[currentLang][key]) {
+          el.innerHTML = i18n[currentLang][key];
+        }
+      });
+    }
+
+    // ==================== 2. 全屏导航与键盘控制 ====================
+    const container = document.getElementById('snapContainer');
+    const sections = Array.from(document.querySelectorAll('.snap-section'));
+    const dots = Array.from(document.querySelectorAll('.nav-dot'));
+    let activeIdx = 0;
+
+    function goToSection(idx) {
+      if (idx < 0 || idx >= sections.length) return;
+      sections[idx].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const secObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          activeIdx = sections.indexOf(entry.target);
+          dots.forEach((d, i) => d.classList.toggle('active', i === activeIdx));
+          if (activeIdx === 1) triggerCountUps();
+        }
+      });
+    }, { root: container, threshold: 0.55 });
+
+    sections.forEach(sec => secObserver.observe(sec));
+
+    window.addEventListener('keydown', (e) => {
+      if (!document.getElementById('globalModal').classList.contains('hidden')) {
+        if (e.key === 'Escape') forceCloseModal();
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+        e.preventDefault();
+        goToSection(activeIdx + 1);
+      } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+        e.preventDefault();
+        goToSection(activeIdx - 1);
+      }
+    });
+
+    // ==================== 3. 数字滚动动画 ====================
+    let counted = false;
+    function triggerCountUps() {
+      if (counted) return;
+      counted = true;
+      document.querySelectorAll('.count-up').forEach(el => {
+        const target = parseFloat(el.dataset.target);
+        const decimals = parseInt(el.dataset.decimals || '0', 10);
+        const suffix = el.dataset.suffix || '';
+        const useComma = el.dataset.comma === 'true';
+        const duration = 1200;
+        const startTime = performance.now();
+
+        function update(now) {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const val = target * eased;
+          let formatted = val.toFixed(decimals);
+          if (useComma) {
+            formatted = Math.round(val).toLocaleString('en-US');
+          }
+          el.textContent = formatted + suffix;
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      });
+    }
+
+    // ==================== 4. Threads Tab & Modal ====================
+    const threadsData = {
+      exposure: {
+        img: './assets/slide-05-1.png',
+        caption: '首页推荐流量占比 98.24%，纯自然触达 93,526 人',
+        title: 'Threads 曝光洞察 · 信息流推荐机制验证',
+        conclusion: '<strong>打法结论（曝光维度）：</strong>单篇帖文自然浏览量达 <strong>101,668</strong>（较日常均値 +227.0%），触达 <strong>93,526</strong> 独立用户。流量来源中 <strong>98.24%</strong> 来自系统首页推荐，搜索仅占 0.09%——证明在 Threads 平台冷启动阶段，<strong>“首屏情绪钩子 + 强共鸣短句”</strong>远比堆砌搜索关键词更能撬动算法池。'
+      },
+      engagement: {
+        img: './assets/slide-05-2.png',
+        caption: '总互动 816 次 · 点赞率 4.12% 触发算法二次推流',
+        title: 'Threads 互动洞察 · 圈层情绪降低交互门槛',
+        conclusion: '<strong>打法结论（互动维度）：</strong>单篇获得 816 次总互动（点赞 767 / 回复 45 / 转发 4），<strong>点赞率高达 4.12%</strong>（账号整体平均互动率为 2.1%）。通过切入粉丝圈层共同槽点，让用户在 1 秒内完成“认同-点赞-评论补充”闭环，向系统释放强正反馈信号。'
+      },
+      audience: {
+        img: './assets/slide-05-3.png',
+        caption: '18–34 岁核心消费人群占比 97%（女性 72.1% / 男性 25.2%）',
+        title: 'Threads 受众画像 · 年轻化与高消费力特征',
+        conclusion: '<strong>打法结论（受众维度）：</strong>看帖用户中 <strong>18–24 岁占 57.7%，25–34 岁占 39.3%</strong>，年轻主力人群合计高达 97%。说明以圈层文化切入海外社媒，能够精准聚合高活跃度 Z 世代与千禧一代受众，为后续消费品/出海品牌种草提供高纯度流量池。'
+      }
+    };
+    let activeThreadsKey = 'exposure';
+
+    function switchThreadsTab(key) {
+      activeThreadsKey = key;
+      ['exposure', 'engagement', 'audience'].forEach(k => {
+        const btn = document.getElementById('tab-btn-' + k);
+        if (k === key) {
+          btn.classList.add('bg-magenta', 'text-white');
+          btn.classList.remove('text-ink');
+        } else {
+          btn.classList.remove('bg-magenta', 'text-white');
+          btn.classList.add('text-ink');
+        }
+      });
+      const data = threadsData[key];
+      const box = document.getElementById('threadsAssetBox');
+      const img = document.getElementById('threadsImg');
+      box.classList.remove('is-missing');
+      img.style.display = 'block';
+      img.src = data.img;
+      document.getElementById('threadsCaption').textContent = data.caption;
+    }
+
+    function openThreadsModal() {
+      const data = threadsData[activeThreadsKey];
+      document.getElementById('modalTitle').textContent = data.title;
+      const box = document.getElementById('modalImgBox');
+      const img = document.getElementById('modalImg');
+      box.classList.remove('is-missing');
+      img.style.display = 'block';
+      img.src = data.img;
+      document.getElementById('modalBody').innerHTML = data.conclusion;
+      document.getElementById('globalModal').classList.remove('hidden');
+    }
+
+    function openLightbox(src, title) {
+      document.getElementById('modalTitle').textContent = title;
+      const box = document.getElementById('modalImgBox');
+      const img = document.getElementById('modalImg');
+      box.classList.remove('is-missing');
+      img.style.display = 'block';
+      img.src = src;
+      document.getElementById('modalBody').innerHTML = '<strong>视觉与信息结构说明：</strong>支持点击右上角关闭或按 ESC 键返回画廊继续浏览。';
+      document.getElementById('globalModal').classList.remove('hidden');
+    }
+
+    function closeModal(e) {
+      if (e.target.id === 'globalModal') forceCloseModal();
+    }
+    function forceCloseModal() {
+      document.getElementById('globalModal').classList.add('hidden');
+    }
+
+    // ==================== 5. 小红书三账号切换 & 5步 Accordion ====================
+    const xhsAccounts = [
+      {
+        name: '优木工房全屋定制',
+        metric: '粉丝 3万 → 8.6万 · 获赞藏 136.6万',
+        tag: '品牌家居生活 · 浙江本地工厂实景 + 装修干货留资',
+        img: './assets/slide-06-1.png'
+      },
+      {
+        name: '一口吃不下馒头',
+        metric: '冷启动 0 → 1,126粉 · 获赞藏 2.4万',
+        tag: '海外留学个人IP · 港大全奖PhD申请攻略与资源锚点引流',
+        img: './assets/slide-06-2.png'
+      },
+      {
+        name: '上海艾十一 A11 Dance',
+        metric: '粉丝 4,933 · 获赞藏 6.1万',
+        tag: '本地青少年街舞机构 · 赛事荣誉背书 + 线下体验课转化',
+        img: './assets/slide-06-3.png'
+      }
+    ];
+
+    function switchXhsAccount(idx) {
+      xhsAccounts.forEach((_, i) => {
+        const btn = document.getElementById('xhs-acc-' + i);
+        if (i === idx) {
+          btn.classList.add('bg-magenta', 'text-white');
+          btn.classList.remove('bg-soft', 'text-ink');
+        } else {
+          btn.classList.remove('bg-magenta', 'text-white');
+          btn.classList.add('bg-soft', 'text-ink');
+        }
+      });
+      const acc = xhsAccounts[idx];
+      const box = document.getElementById('xhsPhoneBox');
+      const img = document.getElementById('xhsPhoneImg');
+      box.classList.remove('is-missing');
+      img.style.display = 'block';
+      img.src = acc.img;
+      document.getElementById('xhsAccName').textContent = acc.name;
+      document.getElementById('xhsAccMetric').textContent = acc.metric;
+      document.getElementById('xhsAccTag').textContent = acc.tag;
+    }
+
+    const xhsSteps = [
+      { step: 'STEP 01 · 窄场景选题', detail: '将宽泛的“全屋定制”收窄至“8㎡小次卧改悬浮书房”，精准命中刚需户型痛点。' },
+      { step: 'STEP 02 · 搜索公式标题', detail: '采用“地域（杭州）+ 品类（全屋定制）+ 具体场景 + 抄作业攻略”，抢占长尾搜索词。' },
+      { step: 'STEP 03 · 6条硬核尺寸参数', detail: '给出桌面宽 60-65cm、离地 78cm、吊柜深 32cm 等可迁移标尺，直接拉高收藏率（1.2万收藏）。' },
+      { step: 'STEP 04 · 双留存钩子设计', detail: '视频内嵌 6 个时间戳编号 + 结尾埋详细 CAD 尺寸图纸，诱导暂停观看并提升完播率。' },
+      { step: 'STEP 05 · 评论区留资闭环', detail: '置顶评论引导私信领图纸，高频回复户型尺寸提问并沉淀为下一篇笔记选题。' }
+    ];
+
+    const accContainer = document.getElementById('xhsAccordion');
+    xhsSteps.forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = 'py-2';
+      div.innerHTML = `
+        <button onclick="toggleXhsStep(${idx})" class="w-full flex items-center justify-between text-left font-bold text-ink hover:text-magenta transition cursor-pointer">
+          <span>${item.step}</span>
+          <span id="xhs-icon-${idx}" class="font-mono text-magenta">${idx === 0 ? '−' : '+'}</span>
+        </button>
+        <p id="xhs-body-${idx}" class="${idx === 0 ? '' : 'hidden'} text-ink/80 mt-1.5 leading-relaxed">${item.detail}</p>
+      `;
+      accContainer.appendChild(div);
+    });
+
+    function toggleXhsStep(idx) {
+      xhsSteps.forEach((_, i) => {
+        const body = document.getElementById('xhs-body-' + i);
+        const icon = document.getElementById('xhs-icon-' + i);
+        if (i === idx) {
+          const isHidden = body.classList.contains('hidden');
+          body.classList.toggle('hidden', !isHidden);
+          icon.textContent = isHidden ? '−' : '+';
+        } else {
+          body.classList.add('hidden');
+          icon.textContent = '+';
+        }
+      });
+    }
+
+    // ==================== 6. 设计画廊横向拖拽 ====================
+    const gallery = document.getElementById('dragGallery');
+    let isDown = false, startX, scrollLeft;
+    gallery.addEventListener('mousedown', (e) => {
+      isDown = true;
+      startX = e.pageX - gallery.offsetLeft;
+      scrollLeft = gallery.scrollLeft;
+    });
+    gallery.addEventListener('mouseleave', () => isDown = false);
+    gallery.addEventListener('mouseup', () => isDown = false);
+    gallery.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - gallery.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      gallery.scrollLeft = scrollLeft - walk;
+    });
+
+    // ==================== 7. KOL 8步工作流 + 4组图表 + 金字塔 ====================
+    const wfSteps = [
+      { num: '01', name: '市场调研', desc: '01 市场调研 · 深挖行业报告与 Google Trends，捕捉北美社媒热点风向' },
+      { num: '02', name: '竞品分析', desc: '02 竞品分析 · 追踪竞对 KOL 投放矩阵与合作形式，寻找差异化破局点' },
+      { num: '03', name: '策略制定', desc: '03 策略制定 · 结合 SMART 原则与 AIDA 模型，制定可落地的季度投放节奏' },
+      { num: '04', name: '达人筛选', desc: '04 达人筛选 · 多维渠道挖掘潜力红人，按互动率、受众画像与调性双重过滤' },
+      { num: '05', name: 'Brief与建联', desc: '05 Brief与建联 · 输出标准化脚本规范，定制化邀约并推进商务谈判签约' },
+      { num: '06', name: '发布跟进', desc: '06 发布跟进 · 审核视频初稿卖点植入质量，确认排期并追踪上线初期互动' },
+      { num: '07', name: '数据复盘', desc: '07 数据复盘 · 拆解曝光、CPE/CPM 与转化表现，输出复盘报告迭代脚本' },
+      { num: '08', name: '资产沉淀', desc: '08 资产沉淀 · 更新分级达人资源库画像，维护高 ROI 长期合作达人池' }
+    ];
+
+    const wfContainer = document.getElementById('kolTimeline');
+    wfSteps.forEach((s, idx) => {
+      const btn = document.createElement('button');
+      btn.className = `wf-node p-2 rounded-xl border border-ink/20 text-left transition cursor-pointer ${idx === 0 ? 'bg-magenta text-white border-ink' : 'bg-sticker hover:bg-white text-ink'}`;
+      btn.innerHTML = `<div class="font-mono text-[10px] opacity-80">${s.num}</div><div class="font-bold text-[11px] truncate">${s.name}</div>`;
+      const activate = () => {
+        document.querySelectorAll('.wf-node').forEach((n, i) => {
+          n.className = `wf-node p-2 rounded-xl border text-left transition cursor-pointer ${i === idx ? 'bg-magenta text-white border-ink' : 'bg-sticker hover:bg-white text-ink border-ink/20'}`;
+        });
+        document.getElementById('wfActiveStepTitle').textContent = s.desc;
+      };
+      btn.addEventListener('mouseenter', activate);
+      btn.addEventListener('click', activate);
+      wfContainer.appendChild(btn);
+    });
+
+    const kolCharts = {
+      model: {
+        unit: '万曝光',
+        max: 180,
+        items: [
+          { label: 'X60 Ultra', val: 169 },
+          { label: 'X50 Ultra', val: 64 },
+          { label: 'D30 Ultra', val: 52.4 },
+          { label: 'L60 Ultra', val: 37.2 },
+          { label: 'D20 Air Plus', val: 9.5 }
+        ],
+        insight: '<strong>策略推演结论（型号维度）：</strong>X60 Ultra 曝光（169万）断层领先第二名 2.6 倍，新品推广期资源应高度集中于核心旗舰机型。'
+      },
+      category: {
+        unit: '万曝光',
+        max: 280,
+        items: [
+          { label: '生活分享 (10人)', val: 266 },
+          { label: '科技测评 (8人)', val: 76 },
+          { label: '养宠家庭 (3人)', val: 62.7 },
+          { label: '产品展示 (1人)', val: 40 }
+        ],
+        insight: '<strong>策略推演结论（红人类别）：</strong>生活分享类贡献最大声量盘；<strong>养宠家庭</strong>仅 3 位达人即斩获 62.7 万曝光（单账号均值 20.9 万），人效比最优。'
+      },
+      scene: {
+        unit: '万均曝光',
+        max: 50,
+        items: [
+          { label: '居家深度评测', val: 42.3 },
+          { label: '开箱/功能展示', val: 29.3 },
+          { label: '解放双手痛点', val: 16.8 }
+        ],
+        insight: '<strong>策略推演结论（内容场景）：</strong>“真实居家评测”与“开箱体验”是高曝光核心脚本方向，Brief 应优先前置真实地面清洁对比画面。'
+      },
+      tier: {
+        unit: '万曝光',
+        max: 220,
+        items: [
+          { label: 'Mega 头部达人', val: 200.6 },
+          { label: 'Mid 中腰部达人', val: 147.8 },
+          { label: 'Micro 微达人', val: 107.1 }
+        ],
+        insight: '<strong>策略推演结论（粉丝等级）：</strong>头部拿声量破圈、中腰部做稳定转化、微达人铺长尾口碑，验证金字塔组合投放的必要性。'
+      }
+    };
+
+    function switchKolChart(key) {
+      ['model', 'category', 'scene', 'tier'].forEach(k => {
+        const btn = document.getElementById('kbtn-' + k);
+        if (k === key) {
+          btn.classList.add('bg-magenta', 'text-white');
+          btn.classList.remove('bg-soft', 'text-ink');
+        } else {
+          btn.classList.remove('bg-magenta', 'text-white');
+          btn.classList.add('bg-soft', 'text-ink');
+        }
+      });
+
+      const data = kolCharts[key];
+      const container = document.getElementById('kolChartBars');
+      container.innerHTML = data.items.map(item => {
+        const pct = Math.min((item.val / data.max) * 100, 100);
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-medium">
+              <span>${item.label}</span>
+              <span class="tabular-nums font-bold text-ink">${item.val} <span class="text-[10px] text-muted font-sans">${data.unit}</span></span>
+            </div>
+            <div class="w-full h-2.5 bg-soft rounded-full overflow-hidden border border-ink/10">
+              <div class="h-full bg-magenta rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('kolChartInsight').innerHTML = data.insight;
+    }
+    switchKolChart('model');
+
+    function togglePyramid(idx) {
+      [0, 1, 2].forEach(i => {
+        const p = document.getElementById('pyr-desc-' + i);
+        if (i === idx) {
+          p.classList.toggle('hidden');
+        } else {
+          p.classList.add('hidden');
+        }
+      });
+    }
+
+    // ==================== 8. 复制邮箱 ====================
+    function copyEmail() {
+      const email = document.getElementById('emailText').textContent.trim();
+      navigator.clipboard.writeText(email).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const old = btn.textContent;
+        btn.textContent = currentLang === 'cn' ? '✓ 已复制到剪贴板' : '✓ Copied to Clipboard';
+        btn.classList.replace('bg-magenta', 'bg-ink');
+        setTimeout(() => {
+          btn.textContent = old;
+          btn.classList.replace('bg-ink', 'bg-magenta');
+        }, 2000);
+      });
+    }
+    // 页面一打开，自动加载 Threads 第 1 个 Tab 和小红书第 1 个账号的图片
+    window.addEventListener('DOMContentLoaded', () => {
+      switchThreadsTab('exposure');
+      switchXhsAccount(0);
+    });
+  </script>
+</body>
+</html>
